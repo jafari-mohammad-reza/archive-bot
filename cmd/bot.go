@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"archive-bot/cmd/handlers"
 	"errors"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"os"
@@ -32,33 +34,30 @@ func SetupBot() error {
 	return nil
 }
 func setupHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
+	var err error
 	for update := range updates {
 		if update.Message.Text == "/start" {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, `welcome 
-use  /hello for more messages
-use /help  for list of commands and their usages
-use /contact for contacting to me
-`)
-			msg.ReplyToMessageID = update.Message.MessageID
-			bot.Send(msg)
+			err = handlers.StartHandler(bot, update)
 		} else {
 			handleUpdate(bot, &update)
 		}
+		if err != nil {
+			fmt.Print("Error ", err.Error())
+			handlers.ErrorHandler(bot, update)
+		}
 	}
+
 }
-func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
+func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) error {
 	text := update.Message.Text
 	text = strings.Split(text, "/")[1]
 	switch text {
-	case "hello":
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "hey")
-		bot.Send(msg)
 	case "contact":
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "contact me by mohammadrexzajafari.dev@gmail.com or https://t.me/DaYeezus in telegram")
-		bot.Send(msg)
+		return handlers.ContactHandler(bot, update)
 	default:
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "invalid message")
 		bot.Send(msg)
+		return nil
 	}
 
 }
