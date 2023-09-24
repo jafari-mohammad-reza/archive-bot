@@ -1,4 +1,4 @@
-package archive_bot
+package main
 
 import (
 	"archive-bot/cmd"
