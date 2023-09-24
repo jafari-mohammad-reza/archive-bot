@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"os"
 	"strings"
@@ -37,8 +38,9 @@ func handlerNames() (*[]string, error) {
 		if !file.IsDir() {
 			name := file.Name()
 			parts := strings.Split(name, ".handler")
+			fmt.Println(parts)
 			if len(parts) > 0 {
-				if parts[0] == "error" {
+				if isInvalidName(parts[0]) {
 					continue
 				}
 				names = append(names, parts[0])
@@ -47,4 +49,13 @@ func handlerNames() (*[]string, error) {
 	}
 
 	return &names, nil
+}
+func isInvalidName(name string) bool {
+	invalidNames := []string{"error", "invalid"}
+	for _, n := range invalidNames {
+		if name == n {
+			return true
+		}
+	}
+	return false
 }

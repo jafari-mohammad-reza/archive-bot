@@ -50,14 +50,16 @@ func setupHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 }
 func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) error {
 	text := update.Message.Text
-	text = strings.Split(text, "/")[1]
+	txts := strings.Split(text, "/")
+	if len(txts) < 2 {
+		return handlers.InvalidCmdHandler(bot, update)
+	}
+	text = txts[1]
 	switch text {
 	case "contact":
 		return handlers.ContactHandler(bot, update)
 	default:
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "invalid message")
-		bot.Send(msg)
-		return nil
+		return handlers.InvalidCmdHandler(bot, update)
 	}
 
 }
