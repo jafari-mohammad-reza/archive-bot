@@ -12,54 +12,57 @@ import (
 
 func SetupBot() error {
 	token := os.Getenv("TOKEN")
-	if len(token) <= 0 {
-		return errors.New("token not exist")
+	if token == "" {
+		return errors.New("token does not exist")
 	}
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	bot.Debug = true
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
-	updates, err := bot.GetUpdatesChan(u)
+	updateConfig := tgbotapi.NewUpdate(0)
+	updateConfig.Timeout = 60
+	updates, err := bot.GetUpdatesChan(updateConfig)
 	if err != nil {
-		return nil
+		return err
 	}
-	setupHandlers(bot, updates)
+
+	setupBotHandlers(bot, updates)
+
 	return nil
 }
-func setupHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
-	var err error
+
+func setupBotHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 	for update := range updates {
+		var handlerError error
 		if update.Message.Text == "/start" {
-			err = handlers.StartHandler(bot, update)
+			handlerError = handlers.StartHandler(bot, update)
 		} else {
-			handleUpdate(bot, &update)
+			handlerError = handleUpdate(bot, &update)
 		}
-		if err != nil {
-			fmt.Print("Error ", err.Error())
+		if handlerError != nil {
+			fmt.Print("Error ", handlerError.Error())
 			handlers.ErrorHandler(bot, update)
 		}
 	}
-
 }
+
 func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) error {
-	text := update.Message.Text
-	txts := strings.Split(text, "/")
-	if len(txts) < 2 {
+	messageTextList := strings.Split(update.Message.Text, "/")
+	if len(messageTextList) < 2 {
 		return handlers.InvalidCmdHandler(bot, update)
 	}
-	text = txts[1]
-	switch text {
+	commandText := messageTextList[1]
+	switch commandText {
 	case "contact":
 		return handlers.ContactHandler(bot, update)
+	case "help":
+		return handlers.HelpHandler(bot, update)
 	default:
 		return handlers.InvalidCmdHandler(bot, update)
 	}
-
 }

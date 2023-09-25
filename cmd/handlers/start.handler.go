@@ -12,10 +12,11 @@ import (
 var once sync.Once
 var names []string
 
+// func /start  - *Starts the bot and provides a welcome message*.
 func StartHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) error {
 	handlers, err := handlerNames()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to retrieve handler names: %v", err)
 	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, `welcome`)
@@ -25,53 +26,42 @@ func StartHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) error {
 	}
 
 	msg.ReplyToMessageID = update.Message.MessageID
-	_, err = bot.Send(msg)
-	if err != nil {
-		return err
+	if _, err = bot.Send(msg); err != nil {
+		return fmt.Errorf("unable to send message: %v", err)
 	}
 	return nil
 }
 
 func handlerNames() (*[]string, error) {
-	var err error // Declare here
+	var readDirErr error
 
 	once.Do(func() {
-		var files []fs.DirEntry // Declare here
+		var files []fs.DirEntry
 
-		files, err = os.ReadDir("./cmd/handlers") // Assigns to the outer err
-		if err != nil {
+		files, readDirErr = os.ReadDir("./cmd/handlers")
+		if readDirErr != nil {
 			return
 		}
 
 		for _, file := range files {
 			if !file.IsDir() {
-				name := file.Name()
-				parts := strings.Split(name, ".handler")
-				fmt.Println(parts)
-				if len(parts) > 0 {
-					if isInvalidName(parts[0]) {
-						continue
-					}
-					names = append(names, parts[0])
+				name := strings.TrimSuffix(file.Name(), ".handler")
+				if isInvalidName(name) {
+					continue
 				}
+				names = append(names, name)
 			}
 		}
 	})
 
 	// Here err is accessible
-	if err != nil {
-		return nil, err
+	if readDirErr != nil {
+		return nil, fmt.Errorf("error reading directory: %v", readDirErr)
 	}
 
-	fmt.Println("names", names)
 	return &names, nil
 }
+
 func isInvalidName(name string) bool {
-	invalidNames := []string{"error", "invalid"}
-	for _, n := range invalidNames {
-		if name == n {
-			return true
-		}
-	}
-	return false
+	return name == "error" || name == "invalid"
 }

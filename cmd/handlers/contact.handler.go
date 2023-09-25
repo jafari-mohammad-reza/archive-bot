@@ -2,6 +2,7 @@ package handlers
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 
+// func /contact - *Provide the contact informations to user*.
 func ContactHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) error {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, `
 Contact me by [email](mailto:mohammadrexzajafari.dev@gmail.com)
