@@ -3,9 +3,14 @@ package handlers
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"io/fs"
 	"os"
 	"strings"
+	"sync"
 )
+
+var once sync.Once
+var names []string
 
 func StartHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) error {
 	handlers, err := handlerNames()
@@ -28,26 +33,37 @@ func StartHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) error {
 }
 
 func handlerNames() (*[]string, error) {
-	files, err := os.ReadDir("/home/yeezus/Desktop/projects/archive-bot/cmd/handlers")
+	var err error // Declare here
+
+	once.Do(func() {
+		var files []fs.DirEntry // Declare here
+
+		files, err = os.ReadDir("./cmd/handlers") // Assigns to the outer err
+		if err != nil {
+			return
+		}
+
+		for _, file := range files {
+			if !file.IsDir() {
+				name := file.Name()
+				parts := strings.Split(name, ".handler")
+				fmt.Println(parts)
+				if len(parts) > 0 {
+					if isInvalidName(parts[0]) {
+						continue
+					}
+					names = append(names, parts[0])
+				}
+			}
+		}
+	})
+
+	// Here err is accessible
 	if err != nil {
 		return nil, err
 	}
 
-	var names []string
-	for _, file := range files {
-		if !file.IsDir() {
-			name := file.Name()
-			parts := strings.Split(name, ".handler")
-			fmt.Println(parts)
-			if len(parts) > 0 {
-				if isInvalidName(parts[0]) {
-					continue
-				}
-				names = append(names, parts[0])
-			}
-		}
-	}
-
+	fmt.Println("names", names)
 	return &names, nil
 }
 func isInvalidName(name string) bool {
