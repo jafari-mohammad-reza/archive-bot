@@ -24,7 +24,7 @@ func (m *AuthMiddleware) Authorize(update *tgbotapi.Update) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	username := update.Message.From.UserName
+	username := update.Message.From.String()
 	fmt.Println("USERNAME", username)
 	_, err := m.userRepo.GetBy(ctx, "user_name", username)
 	if errors.Is(err, mongo.ErrNoDocuments) {

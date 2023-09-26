@@ -38,15 +38,18 @@ func SetupBot() error {
 
 func setupBotHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 	authMiddleware := middleware.NewAuthMiddleware()
-
+	limiter := middleware.NewRateLimiter(10)
 	for update := range updates {
 		err := authMiddleware.Authorize(&update)
 		if err != nil {
-			// handle authorization error
 			log.Println("Authorization failed:", err.Error())
 			continue
 		}
-
+		if err := limiter.Request(update.Message.From.String()); err != nil {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "You're doing that too often. Please wait.")
+			bot.Send(msg)
+			continue
+		}
 		var errCh chan error
 		if update.Message.Text == "/start" {
 			errCh = make(chan error, 1)
