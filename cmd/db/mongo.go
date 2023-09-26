@@ -2,18 +2,26 @@ package db
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"os"
+	"time"
 )
 
 var mongoClient *mongo.Client
 var mongoDatabase *mongo.Database
 
 func ConnectToDB() error {
-	mongoUrl := os.Getenv("mongodb://mongo:27017")
+	mongoUrl := os.Getenv("MONGO_URL")
+	ctx, _ := context.WithTimeout(context.TODO(), time.Second*5)
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoUrl))
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		return err
+	} else {
+		fmt.Println("Database connected successfully")
+	}
 	if err != nil {
 		return err
 		defer func(client *mongo.Client, ctx context.Context) error {
@@ -22,7 +30,7 @@ func ConnectToDB() error {
 				return err
 			}
 			return nil
-		}(client, context.Background())
+		}(client, ctx)
 	}
 	database := client.Database("archive-bot")
 	mongoClient = client
@@ -34,11 +42,4 @@ func GetMongoClient() *mongo.Client {
 }
 func GetMongoDatabase() *mongo.Database {
 	return mongoDatabase
-}
-func stringToObjectId(id string) (primitive.ObjectID, error) {
-	obi, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return primitive.ObjectID{}, err
-	}
-	return obi, nil
 }
