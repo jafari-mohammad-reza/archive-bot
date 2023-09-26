@@ -1,4 +1,4 @@
-- [ ] add user repository and authentication handler that saves user username during the application for authorization
+- [x] add user repository and authentication handler that saves user username during the application for authorization
 - [ ] add note repository and model that keeps text notes with two column format that can be html , text or readme or code and content that is the content of note, also has a relation to user entity
 - [ ] add attachment repository and model that has a relation to note that is optional or user that is required
 - [ ] upload the attachment to a free cloud like cloudinary

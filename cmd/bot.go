@@ -63,27 +63,51 @@ func setupBotHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 	}
 }
 
+// This function takes a bot and an update as input, and returns a channel of errors
 func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) chan error {
+	// Create an error channel with a buffer size of 1
 	errCh := make(chan error, 1)
 
+	// Start a new goroutine to handle the update asynchronously
 	go func() {
+		// If the update contains a photo or document, handle it with the SaveHandler
+		// and return immediately
+		if update.Message.Text == "" && (update.Message.Photo != nil || update.Message.Document != nil) {
+			errCh <- handlers.SaveHandler(bot, update)
+			return
+		}
+
+		// If the update message doesn't contain any "/", treat it as an invalid command
+		if !strings.ContainsAny(update.Message.Text, "/") {
+			errCh <- handlers.InvalidCmdHandler(bot, update)
+			return
+		}
+
+		// Split the update message by "/", and treat it as an invalid command if it's too short
 		messageTextList := strings.Split(update.Message.Text, "/")
 		if len(messageTextList) < 2 {
 			errCh <- handlers.InvalidCmdHandler(bot, update)
 			return
 		}
 
-		commandText := messageTextList[1]
+		// Extract the command text and remove any trailing space
+		commandText := strings.Split(messageTextList[1], " ")[0]
+
+		// Dispatch the command to the appropriate handler
 		switch commandText {
 		case "contact":
 			errCh <- handlers.ContactHandler(bot, update)
 		case "help":
 			errCh <- handlers.HelpHandler(bot, update)
+		case "save":
+			errCh <- handlers.SaveHandler(bot, update)
 		default:
+			// If the command is not recognized, treat it as an invalid command
 			errCh <- handlers.InvalidCmdHandler(bot, update)
 		}
 	}()
 
+	// Return the error channel so the caller can wait for the operation to finish and check for errors
 	return errCh
 }
 func checkErr(errCh chan error) {
