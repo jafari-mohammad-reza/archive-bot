@@ -8,8 +8,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
-	"time"
 )
 
 func SetupBot() error {
@@ -42,68 +40,49 @@ func setupBotHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 	authMiddleware := middleware.NewAuthMiddleware()
 
 	for update := range updates {
-		var wg sync.WaitGroup
-		wg.Add(1)
-		authErrCh := make(chan error, 1)
-		go func(update *tgbotapi.Update) {
-			defer wg.Done()
-			err := authMiddleware.Authorize(update)
-			authErrCh <- err
-		}(&update)
+		err := authMiddleware.Authorize(&update)
+		if err != nil {
+			// handle authorization error
+			log.Println("Authorization failed:", err.Error())
+			continue
+		}
 
-		go func(update *tgbotapi.Update) {
-			wg.Wait() // Wait for authorization to finish
-			err := <-authErrCh
-			if err != nil {
-				// handle authorization error
-				log.Println("Authorization failed:", err.Error())
-				return // end this goroutine if there's an auth error
-			}
-
-			var errCh chan error
-			if update.Message.Text == "/start" {
-				errCh = make(chan error, 1)
-				go func() {
-					errCh <- handlers.StartHandler(bot, *update)
-				}()
-			} else {
-				errCh = handleUpdate(bot, update)
-			}
-			checkErr(errCh)
-
-		}(&update)
-		time.Sleep(time.Millisecond * 500)
+		var errCh chan error
+		if update.Message.Text == "/start" {
+			errCh = make(chan error, 1)
+			go func() {
+				errCh <- handlers.StartHandler(bot, update)
+			}()
+		} else {
+			errCh = handleUpdate(bot, &update)
+		}
+		checkErr(errCh)
 	}
 }
 
 func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) chan error {
-	messageTextList := strings.Split(update.Message.Text, "/")
-	if len(messageTextList) < 2 {
-		errCh := make(chan error)
-		go func() {
+	errCh := make(chan error, 1)
+
+	go func() {
+		messageTextList := strings.Split(update.Message.Text, "/")
+		if len(messageTextList) < 2 {
 			errCh <- handlers.InvalidCmdHandler(bot, update)
-		}()
-		return errCh
-	}
-	commandText := messageTextList[1]
-	errCh := make(chan error)
-	switch commandText {
-	case "contact":
-		go func() {
+			return
+		}
+
+		commandText := messageTextList[1]
+		switch commandText {
+		case "contact":
 			errCh <- handlers.ContactHandler(bot, update)
-		}()
-	case "help":
-		go func() {
+		case "help":
 			errCh <- handlers.HelpHandler(bot, update)
-		}()
-	default:
-		go func() {
+		default:
 			errCh <- handlers.InvalidCmdHandler(bot, update)
-		}()
-	}
+		}
+	}()
+
 	return errCh
 }
-
 func checkErr(errCh chan error) {
 	err := <-errCh
 	if err != nil {
