@@ -21,7 +21,7 @@ RUN go install github.com/cespare/reflex@latest
 
 # Makefile as entrypoint
 ENTRYPOINT ["make"]
-CMD ["dev"]
+CMD ["dev-docker"]
 
 # Use official golang image from docker hub with golang version 1.20.5 as production environment
 FROM golang:1.20.5 as prod
