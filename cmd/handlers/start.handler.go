@@ -45,7 +45,7 @@ func handlerNames() (*[]string, error) {
 
 		for _, file := range files {
 			if !file.IsDir() {
-				name := strings.TrimSuffix(file.Name(), ".handler")
+				name := strings.TrimSuffix(file.Name(), ".handler.go")
 				if isInvalidName(name) {
 					continue
 				}

@@ -11,8 +11,5 @@ on Telegram: [DaYeezus](https://t.me/DaYeezus)
 `)
 	msg.ParseMode = "Markdown"
 	_, err := bot.Send(msg)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

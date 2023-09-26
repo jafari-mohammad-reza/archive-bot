@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,6 +14,7 @@ type AbstractRepository[T any] interface {
 	Delete(ctx context.Context, id string) error
 	GetAll(ctx context.Context) ([]T, error)
 	GetById(ctx context.Context, id string) (T, error)
+	GetBy(ctx context.Context, paramName string, paramVal interface{}) (T, error)
 	Drop(ctx context.Context) error
 }
 type MongoDbAbstractRepository[T any] struct {
@@ -83,6 +85,18 @@ func (m *MongoDbAbstractRepository[T]) GetById(ctx context.Context, id string) (
 	decodeErr := m.Collection.FindOne(ctx, filter, nil).Decode(&data)
 	if decodeErr != nil {
 		return zero((*T)(nil)), decodeErr
+	}
+	return data, nil
+}
+
+func (m *MongoDbAbstractRepository[T]) GetBy(ctx context.Context, paramName string, paramVal interface{}) (T, error) {
+	filter := bson.M{paramName: paramVal}
+	var data T
+	if err := m.Collection.FindOne(ctx, filter).Decode(&data); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return zero((*T)(nil)), err
+		}
+		return zero((*T)(nil)), err
 	}
 	return data, nil
 }
