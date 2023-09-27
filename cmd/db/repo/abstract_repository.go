@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -21,9 +22,13 @@ type MongoDbAbstractRepository[T any] struct {
 	Collection *mongo.Collection
 }
 
-func (m *MongoDbAbstractRepository[T]) Create(ctx context.Context, entity any) error {
-	_, err := m.Collection.InsertOne(ctx, entity)
-	return err
+func (m *MongoDbAbstractRepository[T]) Create(ctx context.Context, entity any) (*mongo.InsertOneResult, error) {
+	res, err := m.Collection.InsertOne(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(res.InsertedID)
+	return res, nil
 }
 
 func (m *MongoDbAbstractRepository[T]) Update(ctx context.Context, id string, update any) error {

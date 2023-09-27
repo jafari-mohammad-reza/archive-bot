@@ -13,26 +13,46 @@ func SaveHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) error {
 	if isAttachment {
 		saveAttachment(update)
 	}
-	// check if message contains any text beside the command
-	var text []string
-	text = strings.Split(update.Message.Text, "/save")
-	if !(len(text) >= 2) {
-		text = strings.Split(update.Message.Caption, "/save")
+
+	// Check if message contains any text beside the '/save' command
+	text := getTextAfterSaveCommand(update)
+	isText := text != ""
+
+	if isText {
+		saveTextNote(update, &text)
 	}
 
-	if len(text) >= 2 {
-		trimText := strings.ReplaceAll(text[1], " ", "")
-		isText := trimText != ""
-		if isText {
-			saveTextNote(update, &trimText)
-		}
+	// If neither attachment nor text is found, send a message to the user
+	if !isAttachment && !isText {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Please provide something to save (attachment or text)")
+		_, err := bot.Send(msg)
+		return err
 	}
 
 	return nil
 }
 
+// getTextAfterSaveCommand extracts text after '/save' command from an update message or caption
+func getTextAfterSaveCommand(update *tgbotapi.Update) string {
+	var text string
+	possibleTexts := []string{update.Message.Text, update.Message.Caption}
+
+	for _, possibleText := range possibleTexts {
+		splitText := strings.Split(possibleText, "/save")
+		if len(splitText) >= 2 {
+			// Remove leading and trailing whitespaces
+			text = strings.TrimSpace(splitText[1])
+			if text != "" {
+				break
+			}
+		}
+	}
+
+	return text
+}
 func saveTextNote(update *tgbotapi.Update, text *string) error {
 	fmt.Println("save text")
+
 	return nil
 }
 
