@@ -13,7 +13,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db.ConnectToDB()
+  err = 	db.ConnectToDB()
 	if err != nil {
 		log.Fatal(err)
 	}

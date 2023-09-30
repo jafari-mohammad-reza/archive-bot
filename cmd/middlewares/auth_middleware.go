@@ -1,24 +1,25 @@
 package middleware
 
 import (
-	"archive-bot/cmd/db/repo"
+	"archive-bot/cmd/db"
 	"archive-bot/cmd/models"
 	"context"
 	"errors"
+	"time"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"time"
 )
 
 type AuthMiddleware struct {
-	userRepo *repo.UserRepository
+	userRepo *db.UserRepository
 }
 
 var AuthorizedUsers map[string]*primitive.ObjectID
 
 func NewAuthMiddleware() *AuthMiddleware {
-	userRepo := repo.NewUserRepository()
+	userRepo := db.NewUserRepository()
 	AuthorizedUsers = make(map[string]*primitive.ObjectID)
 	return &AuthMiddleware{userRepo}
 }

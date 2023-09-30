@@ -2,16 +2,16 @@ package handlers
 
 import (
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"io/fs"
 	"os"
 	"strings"
 	"sync"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 var once sync.Once
 var names []string
-
 // func /start  - *Starts the bot and provides a welcome message*.
 func StartHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) error {
 	handlers, err := handlerNames()

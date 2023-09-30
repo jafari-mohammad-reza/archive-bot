@@ -8,15 +8,15 @@ services:
     volumes:
       - .:/app/
     depends_on:
-      - mongo
+      - archiver-mongo
     environment:
-      MONGO_URL: mongodb://mongo:27017
-  mongo:
-    image: mongo
+      MONGO_URL: mongodb://archiver-mongo:27017
+  archiver-mongo:
+    image: mongo:focal
     ports:
       - "27017:27017"
     volumes:
       - mongo:/data/db
-    container_name: mongo
+    container_name: archiver-mongo
 volumes:
   mongo:

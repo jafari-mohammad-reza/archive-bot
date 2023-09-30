@@ -20,7 +20,7 @@ func SetupBot() error {
 		return err
 	}
 
-	bot.Debug = true
+	// bot.Debug = true
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
