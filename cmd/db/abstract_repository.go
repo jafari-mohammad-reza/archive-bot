@@ -1,4 +1,4 @@
-package repo
+package db
 
 import (
 	"context"
@@ -7,8 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+  "sync"
 )
 
+var repoOnce *sync.Once
 type AbstractRepository[T any] interface {
 	Create(ctx context.Context, entity any) error
 	Update(ctx context.Context, id string, update any) error
