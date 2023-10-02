@@ -13,7 +13,8 @@ var mongoClient *mongo.Client
 var mongoDatabase *mongo.Database
 func ConnectToDB() (err error) {
 	mongoUrl := os.Getenv("MONGO_URL")
-	ctx, _ := context.WithTimeout(context.TODO(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
+  defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoUrl))
 	if err != nil {
 		return err

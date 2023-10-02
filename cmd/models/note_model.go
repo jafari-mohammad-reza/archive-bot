@@ -11,5 +11,4 @@ type NoteModel struct {
 	AuthorId      primitive.ObjectID   `json:"author_id,omitempty" bson:"author_id,omitempty"`
   Content string  `json:"content,omitempty" bson:"content,omitempty"`
   ContentFormat NoteFormat `json:"content_format;omitempty" bson:"content_format;omitempty"`
-	AttachmentsId []primitive.ObjectID `json:"attachments_id,omitempty" bson:"attachments_id,omitempty"`
 }

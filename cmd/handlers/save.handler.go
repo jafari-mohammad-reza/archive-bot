@@ -5,12 +5,12 @@ import (
 	middleware "archive-bot/cmd/middlewares"
 	"archive-bot/cmd/models"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // func /save - *save user message as a note and if message contains any attachment save attachment as well*
@@ -21,9 +21,8 @@ func SaveHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) error {
 	isText := text != ""
   ctx , cancel := context.WithTimeout(context.TODO() , time.Second*5)
   defer cancel()
-  var err error
 	if isText {
-    err = 	saveTextNote(update, &text , ctx)
+    err := 	saveTextNote(update, &text , ctx)
     if err != nil {
       return err
     }
@@ -32,14 +31,17 @@ func SaveHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) error {
 	// Check if message contains any document or photo
 	isAttachment := update.Message.Document != nil || update.Message.Photo != nil
 	if isAttachment {
-		saveAttachment(update , ctx)
+    err :=		saveAttachment(update , ctx)
+    if err != nil {
+      return err
+    }
 	}
 
 
 	// If neither attachment nor text is found, send a message to the user
 	if !isAttachment && !isText {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Please provide something to save (attachment or text)")
-		_, err = bot.Send(msg)
+    _, err := bot.Send(msg)
 		return err
 	}
 
@@ -75,12 +77,18 @@ func saveTextNote(update *tgbotapi.Update, text *string , ctx context.Context)  
 	return    nil
 }
 
-func saveAttachment(update *tgbotapi.Update , ctx context.Context) (*[]*primitive.ObjectID , error) {
+func saveAttachment(update *tgbotapi.Update , ctx context.Context)  error {
   attachmentRepo := db.GetAttachmentRepository()
-	// documents := update.Message.Document
-	// photos := update.Message.Photo
+  var attachmentId string
+  documents := update.Message.Document
+  if documents != nil {
+    attachmentId = documents.FileID
+  }else {
+    return  errors.New("no attachment or photo sent")
+  }
+  caption := update.Message.Caption
   authorId := middleware.AuthorizedUsers[update.Message.From.String()]
-  attachment := models.AttachmentModel{AuthorId: *authorId}
+  attachment := models.AttachmentModel{AuthorId: *authorId , Url: attachmentId  , Caption: &caption }
   attachmentRepo.Create(ctx , attachment)
-	return nil , nil
+	return nil
 }
