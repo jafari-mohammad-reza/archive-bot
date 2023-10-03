@@ -16,16 +16,16 @@ func SetupBot() error {
 	if token == "" {
 		return errors.New("token does not exist")
 	}
+
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return err
 	}
 
-	// bot.Debug = true
-
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	updateConfig := tgbotapi.NewUpdate(0)
+
 	updateConfig.Timeout = 60
 	updates, err := bot.GetUpdatesChan(updateConfig)
 	if err != nil {
@@ -43,8 +43,22 @@ func setupBotHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 
 	for update := range updates {
 		errCh := handleUpdateWithMiddleware(bot, update, authMiddleware, limiter)
-		checkErr(errCh)
+		err := <-errCh
+		if err != nil {
+			log.Println("An error occured:", err.Error())
+		}
 	}
+}
+
+func handleMessage(update *tgbotapi.Update) string {
+	if update.Message != nil {
+		return update.Message.Text
+	} else if update.InlineQuery != nil {
+		return update.InlineQuery.Query
+	} else if update.CallbackQuery != nil {
+		return update.CallbackQuery.Message.Text
+	}
+	return ""
 }
 
 func handleUpdateWithMiddleware(bot *tgbotapi.BotAPI, update tgbotapi.Update, authMiddleware *middleware.AuthMiddleware, limiter *middleware.RateLimiter) chan error {
@@ -56,7 +70,7 @@ func handleUpdateWithMiddleware(bot *tgbotapi.BotAPI, update tgbotapi.Update, au
 			return
 		}
 
-		if update.Message.Text == "/start" {
+		if handleMessage(&update) == "/start" {
 			errChan <- <-startHandlerAsync(bot, &update)
 		} else {
 			errChan <- <-handleUpdate(bot, &update)
@@ -72,8 +86,9 @@ func authenticateAndUpdateRate(authMiddleware *middleware.AuthMiddleware, limite
 		return err
 	}
 
-	err = limiter.Request(update.Message.From.String())
-	if handleError("You're doing that too often. Please wait.", err) {
+	username := getUserName(update)
+	err = limiter.Request(username)
+	if handleError("Rate limit error:", err) {
 		return err
 	}
 
@@ -97,22 +112,53 @@ func startHandlerAsync(bot *tgbotapi.BotAPI, update *tgbotapi.Update) chan error
 	return errCh
 }
 
-// This function takes a bot and an update as input, and returns a channel of errors
-func getCommand(update *tgbotapi.Update) (string, error) {
-	if !strings.ContainsAny(update.Message.Text, "/") {
-		return "", fmt.Errorf("invalid command")
+func getUserName(update *tgbotapi.Update) string {
+	var username string
+	if update.Message != nil {
+		username = update.Message.From.String()
+	} else if update.InlineQuery != nil {
+		username = update.InlineQuery.From.String()
+	} else if update.CallbackQuery != nil {
+		username = update.CallbackQuery.From.String()
 	}
-
-	messageTextList := strings.Split(update.Message.Text, "/")
-	if len(messageTextList) < 2 {
-		return "", fmt.Errorf("invalid command")
-	}
-
-	return strings.Split(messageTextList[1], " ")[0], nil
+	return username
 }
 
-func handleMessage(bot *tgbotapi.BotAPI, update *tgbotapi.Update, commandText string) error {
-	switch commandText {
+func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) chan error {
+	errCh := make(chan error, 1)
+
+	go func() {
+		var messageText string
+		if update.Message != nil {
+			messageText = update.Message.Text
+		} else if update.InlineQuery != nil {
+			messageText = update.InlineQuery.Query
+		} else if update.CallbackQuery != nil {
+			messageText = update.CallbackQuery.Message.Text
+		}
+
+		if messageText == "" && (update.Message != nil && (update.Message.Photo != nil || update.Message.Document != nil)) {
+			errCh <- handlers.SaveHandler(bot, update)
+			return
+		}
+
+		messageTextList := strings.Split(messageText, "/")
+		fmt.Println("messageTextList", messageTextList)
+		if len(messageTextList) < 2 {
+			errCh <- errors.New("invalid command")
+			return
+		}
+
+		command := strings.Split(messageTextList[1], " ")[0]
+		errCh <- handleMessageWithCommand(bot, update, command)
+	}()
+
+	return errCh
+}
+
+func handleMessageWithCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update, command string) error {
+	fmt.Println("COMMAND", command)
+	switch command {
 	case "contact":
 		return handlers.ContactHandler(bot, update)
 	case "help":
@@ -121,36 +167,9 @@ func handleMessage(bot *tgbotapi.BotAPI, update *tgbotapi.Update, commandText st
 		return handlers.SaveHandler(bot, update)
 	case "notes":
 		return handlers.GetNoteHandler(bot, update)
+	case "see":
+		return handlers.GetNoteHandler(bot, update)
 	default:
 		return handlers.InvalidCmdHandler(bot, update)
-	}
-}
-
-func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) chan error {
-	errCh := make(chan error, 1)
-
-	go func() {
-		// If the update contains a photo or document, handle it with the SaveHandler
-		if update.Message.Text == "" && (update.Message.Photo != nil || update.Message.Document != nil) {
-			errCh <- handlers.SaveHandler(bot, update)
-			return
-		}
-
-		commandText, err := getCommand(update)
-
-		if err != nil {
-			errCh <- handlers.InvalidCmdHandler(bot, update)
-			return
-		}
-
-		errCh <- handleMessage(bot, update, commandText)
-	}()
-
-	return errCh
-}
-func checkErr(errCh chan error) {
-	err := <-errCh
-	if err != nil {
-		log.Fatal("error at handling commands", err.Error())
 	}
 }

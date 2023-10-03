@@ -56,7 +56,7 @@ func getNoteMsg(note models.NoteModel) (string, tgbotapi.InlineKeyboardMarkup) {
 	} else {
 		content = note.Content
 	}
-	btnSee := tgbotapi.NewInlineKeyboardButtonData("See Note", fmt.Sprintf("/see %s", note.ID))
+	btnSee := tgbotapi.NewInlineKeyboardButtonSwitch("See Note", fmt.Sprintf("/see %s", note.ID))
 	row1 := tgbotapi.NewInlineKeyboardRow(btnSee)
 	inlineKeyboard := tgbotapi.NewInlineKeyboardMarkup(row1)
 	return fmt.Sprintf("%s", content), inlineKeyboard

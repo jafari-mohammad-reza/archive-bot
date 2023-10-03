@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,7 +29,6 @@ func (m *MongoDbAbstractRepository[T]) Create(ctx context.Context, entity any) (
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(res.InsertedID)
 	return res, nil
 }
 

@@ -27,8 +27,16 @@ func NewAuthMiddleware() *AuthMiddleware {
 func (m *AuthMiddleware) Authorize(update *tgbotapi.Update) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	username := update.Message.From.String()
+	var username string
+	if update.Message != nil {
+		username = update.Message.From.String()
+	} else if update.InlineQuery != nil {
+		username = update.InlineQuery.From.String()
+	} else if update.CallbackQuery != nil {
+		username = update.CallbackQuery.From.String()
+	} else {
+		return errors.New("invalid user")
+	}
 	existUser, err := m.userRepo.GetBy(ctx, "user_name", username)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		user := models.UserModel{UserName: username}
@@ -40,10 +48,10 @@ func (m *AuthMiddleware) Authorize(update *tgbotapi.Update) error {
 	} else if err != nil {
 		return err
 	}
-	if AuthorizedUsers[update.Message.From.String()] != nil {
+	if AuthorizedUsers[username] != nil {
 		return nil
 	} else {
-		AuthorizedUsers[update.Message.From.String()] = &existUser.ID
+		AuthorizedUsers[username] = &existUser.ID
 	}
 	return nil
 }
