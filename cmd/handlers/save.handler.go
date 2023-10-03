@@ -67,7 +67,6 @@ func getTextAfterSaveCommand(update *tgbotapi.Update) string {
 }
 func saveTextNote(bot *tgbotapi.BotAPI, update *tgbotapi.Update, text *string, ctx context.Context) error {
 	noteRepo := db.GetNoteRepo()
-	fmt.Println("NOTE REPO", noteRepo)
 	note := models.NoteModel{AuthorId: *middleware.AuthorizedUsers[update.Message.From.String()], Content: *text, ContentFormat: models.Text}
 	cn, err := noteRepo.Create(ctx, note)
 	if err != nil {

@@ -7,10 +7,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-  "sync"
+	"sync"
 )
 
 var repoOnce *sync.Once
+
 type AbstractRepository[T any] interface {
 	Create(ctx context.Context, entity any) error
 	Update(ctx context.Context, id string, update any) error
@@ -69,6 +70,29 @@ func (m *MongoDbAbstractRepository[T]) GetAll(ctx context.Context) ([]T, error) 
 	err = cursor.All(ctx, &entities)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			return []T{}, nil
+		}
+		return nil, err
+	}
+	return entities, nil
+}
+func (m *MongoDbAbstractRepository[T]) GetAllBy(ctx context.Context, paramName string, paramVal interface{}) ([]T, error) {
+	filter := bson.M{paramName: paramVal}
+	cursor, err := m.Collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer func(cursor *mongo.Cursor, ctx context.Context) {
+		err := cursor.Close(ctx)
+		if err != nil {
+
+		}
+	}(cursor, ctx)
+
+	var entities []T
+	err = cursor.All(ctx, &entities)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return []T{}, nil
 		}
 		return nil, err
