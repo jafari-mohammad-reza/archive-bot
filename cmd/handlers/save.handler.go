@@ -19,29 +19,28 @@ func SaveHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) error {
 	// Check if message contains any text beside the '/save' command
 	text := getTextAfterSaveCommand(update)
 	isText := text != ""
-  ctx , cancel := context.WithTimeout(context.TODO() , time.Second*5)
-  defer cancel()
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
+	defer cancel()
 	if isText {
-    err := 	saveTextNote(update, &text , ctx)
-    if err != nil {
-      return err
-    }
+		err := saveTextNote(bot, update, &text, ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Check if message contains any document or photo
 	isAttachment := update.Message.Document != nil || update.Message.Photo != nil
 	if isAttachment {
-    err :=		saveAttachment(update , ctx)
-    if err != nil {
-      return err
-    }
+		err := saveAttachment(bot, update, ctx)
+		if err != nil {
+			return err
+		}
 	}
-
 
 	// If neither attachment nor text is found, send a message to the user
 	if !isAttachment && !isText {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Please provide something to save (attachment or text)")
-    _, err := bot.Send(msg)
+		_, err := bot.Send(msg)
 		return err
 	}
 
@@ -66,29 +65,42 @@ func getTextAfterSaveCommand(update *tgbotapi.Update) string {
 
 	return text
 }
-func saveTextNote(update *tgbotapi.Update, text *string , ctx context.Context)  error {
-  noteRepo := db.GetNoteRepo()
-  fmt.Println("NOTE REPO" , noteRepo)
-  note := models.NoteModel{AuthorId:*middleware.AuthorizedUsers[update.Message.From.String()] ,Content: *text , ContentFormat: models.Text }
-  _ , err := noteRepo.Create(ctx , note)
-  if err != nil {
-    return err
-  }
-	return    nil
+func saveTextNote(bot *tgbotapi.BotAPI, update *tgbotapi.Update, text *string, ctx context.Context) error {
+	noteRepo := db.GetNoteRepo()
+	fmt.Println("NOTE REPO", noteRepo)
+	note := models.NoteModel{AuthorId: *middleware.AuthorizedUsers[update.Message.From.String()], Content: *text, ContentFormat: models.Text}
+	cn, err := noteRepo.Create(ctx, note)
+	if err != nil {
+		return err
+	}
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("message save successfully with id of %s", cn.InsertedID))
+	_, err = bot.Send(msg)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func saveAttachment(update *tgbotapi.Update , ctx context.Context)  error {
-  attachmentRepo := db.GetAttachmentRepository()
-  var attachmentId string
-  documents := update.Message.Document
-  if documents != nil {
-    attachmentId = documents.FileID
-  }else {
-    return  errors.New("no attachment or photo sent")
-  }
-  caption := update.Message.Caption
-  authorId := middleware.AuthorizedUsers[update.Message.From.String()]
-  attachment := models.AttachmentModel{AuthorId: *authorId , Url: attachmentId  , Caption: &caption }
-  attachmentRepo.Create(ctx , attachment)
+func saveAttachment(bot *tgbotapi.BotAPI, update *tgbotapi.Update, ctx context.Context) error {
+	attachmentRepo := db.GetAttachmentRepository()
+	var attachmentId string
+	documents := update.Message.Document
+	if documents != nil {
+		attachmentId = documents.FileID
+	} else {
+		return errors.New("no attachment or photo sent")
+	}
+	caption := update.Message.Caption
+	authorId := middleware.AuthorizedUsers[update.Message.From.String()]
+	attachment := models.AttachmentModel{AuthorId: *authorId, Url: attachmentId, Caption: &caption}
+	cn, err := attachmentRepo.Create(ctx, attachment)
+	if err != nil {
+		return err
+	}
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("attachment save successfully with id of %s", cn.InsertedID))
+	_, err = bot.Send(msg)
+	if err != nil {
+		return err
+	}
 	return nil
 }

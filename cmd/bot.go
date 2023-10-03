@@ -4,6 +4,7 @@ import (
 	"archive-bot/cmd/handlers"
 	middleware "archive-bot/cmd/middlewares"
 	"errors"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"os"
@@ -39,75 +40,112 @@ func SetupBot() error {
 func setupBotHandlers(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 	authMiddleware := middleware.NewAuthMiddleware()
 	limiter := middleware.NewRateLimiter(10)
+
 	for update := range updates {
-		err := authMiddleware.Authorize(&update)
-		if err != nil {
-			log.Println("Authorization failed:", err.Error())
-			continue
-		}
-		if err := limiter.Request(update.Message.From.String()); err != nil {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "You're doing that too often. Please wait.")
-			bot.Send(msg)
-			continue
-		}
-		var errCh chan error
-		if update.Message.Text == "/start" {
-			errCh = make(chan error, 1)
-			go func() {
-				errCh <- handlers.StartHandler(bot, update)
-			}()
-		} else {
-			errCh = handleUpdate(bot, &update)
-		}
+		errCh := handleUpdateWithMiddleware(bot, update, authMiddleware, limiter)
 		checkErr(errCh)
 	}
 }
 
+func handleUpdateWithMiddleware(bot *tgbotapi.BotAPI, update tgbotapi.Update, authMiddleware *middleware.AuthMiddleware, limiter *middleware.RateLimiter) chan error {
+	errChan := make(chan error)
+
+	go func() {
+		if err := authenticateAndUpdateRate(authMiddleware, limiter, &update); err != nil {
+			errChan <- err
+			return
+		}
+
+		if update.Message.Text == "/start" {
+			errChan <- <-startHandlerAsync(bot, &update)
+		} else {
+			errChan <- <-handleUpdate(bot, &update)
+		}
+	}()
+
+	return errChan
+}
+
+func authenticateAndUpdateRate(authMiddleware *middleware.AuthMiddleware, limiter *middleware.RateLimiter, update *tgbotapi.Update) error {
+	err := authMiddleware.Authorize(update)
+	if handleError("Authorization failed:", err) {
+		return err
+	}
+
+	err = limiter.Request(update.Message.From.String())
+	if handleError("You're doing that too often. Please wait.", err) {
+		return err
+	}
+
+	return nil
+}
+
+func handleError(message string, err error) bool {
+	if err != nil {
+		log.Println(message, err.Error())
+		return true
+	}
+	return false
+}
+
+func startHandlerAsync(bot *tgbotapi.BotAPI, update *tgbotapi.Update) chan error {
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- handlers.StartHandler(bot, *update)
+	}()
+
+	return errCh
+}
+
 // This function takes a bot and an update as input, and returns a channel of errors
+func getCommand(update *tgbotapi.Update) (string, error) {
+	if !strings.ContainsAny(update.Message.Text, "/") {
+		return "", fmt.Errorf("invalid command")
+	}
+
+	messageTextList := strings.Split(update.Message.Text, "/")
+	if len(messageTextList) < 2 {
+		return "", fmt.Errorf("invalid command")
+	}
+
+	return strings.Split(messageTextList[1], " ")[0], nil
+}
+
+func handleMessage(bot *tgbotapi.BotAPI, update *tgbotapi.Update, commandText string) error {
+	switch commandText {
+	case "contact":
+		return handlers.ContactHandler(bot, update)
+	case "help":
+		return handlers.HelpHandler(bot, update)
+	case "save":
+		return handlers.SaveHandler(bot, update)
+	case "notes":
+		return handlers.GetNoteHandler(bot, update)
+	default:
+		return handlers.InvalidCmdHandler(bot, update)
+	}
+}
+
 func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) chan error {
-	// Create an error channel with a buffer size of 1
 	errCh := make(chan error, 1)
 
-	// Start a new goroutine to handle the update asynchronously
 	go func() {
 		// If the update contains a photo or document, handle it with the SaveHandler
-		// and return immediately
 		if update.Message.Text == "" && (update.Message.Photo != nil || update.Message.Document != nil) {
 			errCh <- handlers.SaveHandler(bot, update)
 			return
 		}
 
-		// If the update message doesn't contain any "/", treat it as an invalid command
-		if !strings.ContainsAny(update.Message.Text, "/") {
+		commandText, err := getCommand(update)
+
+		if err != nil {
 			errCh <- handlers.InvalidCmdHandler(bot, update)
 			return
 		}
 
-		// Split the update message by "/", and treat it as an invalid command if it's too short
-		messageTextList := strings.Split(update.Message.Text, "/")
-		if len(messageTextList) < 2 {
-			errCh <- handlers.InvalidCmdHandler(bot, update)
-			return
-		}
-
-		// Extract the command text and remove any trailing space
-		commandText := strings.Split(messageTextList[1], " ")[0]
-
-		// Dispatch the command to the appropriate handler
-		switch commandText {
-		case "contact":
-			errCh <- handlers.ContactHandler(bot, update)
-		case "help":
-			errCh <- handlers.HelpHandler(bot, update)
-		case "save":
-			errCh <- handlers.SaveHandler(bot, update)
-		default:
-			// If the command is not recognized, treat it as an invalid command
-			errCh <- handlers.InvalidCmdHandler(bot, update)
-		}
+		errCh <- handleMessage(bot, update, commandText)
 	}()
 
-	// Return the error channel so the caller can wait for the operation to finish and check for errors
 	return errCh
 }
 func checkErr(errCh chan error) {

@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GoORMHelperCache">
+    <option name="schemaMapping">
+      <map>
+        <entry key="AttachmentModel">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/models/attachment_model.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="AttachmentRepository">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/db/attachment_repository.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="AuthMiddleware">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/middlewares/auth_middleware.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="MongoDbAbstractRepository">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/db/abstract_repository.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="NoteModel">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/models/note_model.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="NoteRepository">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/db/note_repository.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="RateLimiter">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/middlewares/limmiter_middleware.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="UserModel">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/models/user_model.go" />
+            </set>
+          </value>
+        </entry>
+        <entry key="UserRepository">
+          <value>
+            <set>
+              <option value="file://$PROJECT_DIR$/cmd/db/user_repository.go" />
+            </set>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="scannedPathMapping">
+      <map>
+        <entry key="file://$PROJECT_DIR$/cmd/bot.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696326960388" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/db/abstract_repository.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696093402671" />
+              <option name="schema">
+                <list>
+                  <option value="MongoDbAbstractRepository" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/db/attachment_repository.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696093402671" />
+              <option name="schema">
+                <list>
+                  <option value="AttachmentRepository" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/db/mongo.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696260947066" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/db/note_repository.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696093402671" />
+              <option name="schema">
+                <list>
+                  <option value="NoteRepository" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/db/user_repository.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696093402671" />
+              <option name="schema">
+                <list>
+                  <option value="UserRepository" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/handlers/contact.handler.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1695880364203" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/handlers/error.handler.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1695880364205" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/handlers/help.handler.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1695880364205" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/handlers/invalid.handler.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1695880364205" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/handlers/note.handler.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696326381536" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/handlers/save.handler.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696329916728" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/handlers/start.handler.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696093402671" />
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/middlewares/auth_middleware.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696093402671" />
+              <option name="schema">
+                <list>
+                  <option value="AuthMiddleware" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/middlewares/limmiter_middleware.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1695880364205" />
+              <option name="schema">
+                <list>
+                  <option value="RateLimiter" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/models/attachment_model.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696260947066" />
+              <option name="schema">
+                <list>
+                  <option value="AttachmentModel" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/models/note_model.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696260947066" />
+              <option name="schema">
+                <list>
+                  <option value="NoteModel" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/cmd/models/user_model.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1695880364205" />
+              <option name="schema">
+                <list>
+                  <option value="UserModel" />
+                </list>
+              </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/main.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1696093402673" />
+            </ScannedPath>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="tableStructMapping">
+      <map>
+        <entry key="attachment_model" value="AttachmentModel" />
+        <entry key="attachment_repository" value="AttachmentRepository" />
+        <entry key="auth_middleware" value="AuthMiddleware" />
+        <entry key="mongo_db_abstract_repository" value="MongoDbAbstractRepository" />
+        <entry key="note_model" value="NoteModel" />
+        <entry key="note_repository" value="NoteRepository" />
+        <entry key="rate_limiter" value="RateLimiter" />
+        <entry key="user_model" value="UserModel" />
+        <entry key="user_repository" value="UserRepository" />
+      </map>
+    </option>
+    <option name="lastTimeChecked" value="1696326243541" />
+  </component>
+</project>
