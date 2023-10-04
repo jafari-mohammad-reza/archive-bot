@@ -150,13 +150,13 @@ func handleUpdate(bot *tgbotapi.BotAPI, update *tgbotapi.Update) chan error {
 		}
 
 		command := strings.Split(messageTextList[1], " ")[0]
-		errCh <- handleMessageWithCommand(bot, update, command)
+		errCh <- handleMessageWithCommand(bot, update, command, &messageText)
 	}()
 
 	return errCh
 }
 
-func handleMessageWithCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update, command string) error {
+func handleMessageWithCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update, command string, messageText *string) error {
 	fmt.Println("COMMAND", command)
 	switch command {
 	case "contact":
@@ -166,9 +166,7 @@ func handleMessageWithCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update, com
 	case "save":
 		return handlers.SaveHandler(bot, update)
 	case "notes":
-		return handlers.GetNoteHandler(bot, update)
-	case "see":
-		return handlers.GetNoteHandler(bot, update)
+		return handlers.GetNoteHandler(messageText, bot, update)
 	default:
 		return handlers.InvalidCmdHandler(bot, update)
 	}
